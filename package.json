@@ -1,0 +1,32 @@
+{
+  "name": "electron-express-react",
+  "version": "1.0.0",
+  "description": "A minimal Electron application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aug2uag/electron-express-react.git"
+  },
+  "keywords": [
+    "Electron",
+    "Express",
+    "React"
+  ],
+  "author": "aug2uag",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/aug2uag/electron-express-react/issues"
+  },
+  "homepage": "https://github.com/aug2uag/electron-express-react#readme",
+  "devDependencies": {
+    "electron-prebuilt": "^0.37.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "cookie-parser": "^1.4.1",
+    "express": "^4.13.4"
+  }
+}

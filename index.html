@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>electron-react</title>
+    <link href='https://fonts.googleapis.com/css?family=Noto+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/foundation/6.1.1/foundation.min.css">
+    <!-- <link rel="stylesheet" type="text/css" href="client/css/main.css"> -->
+    <style type="text/css">
+        body {
+          background-color: #000000;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        .container {
+          max-width: 1024px;
+        }
+
+        body {
+          background: #000000;
+          color: #353535;
+          font-family: "Noto Sans", Arial, sans-serif;
+          font-size: 100%;
+        }
+
+        h2 {
+          font-size: 1.8em;
+        }
+
+        h3 {
+          font-size: 1.2em;
+          margin-bottom: 0.2em;
+          font-style: italic;
+        }
+
+        h4 {
+          font-size: 1.1em;
+        }
+
+        select {
+          outline: none;
+        }
+
+        label {
+          font-size: 1.2em;
+          line-height: 2.2;
+        }
+
+        li {
+          list-style: none;
+          opacity: 0.8;
+          transition: all 0.3s ease-in-out;
+        }
+        li:hover {
+          opacity: 1.0;
+        }
+
+        a {
+          color: #353535;
+        }
+        a:visited, a:hover, a:active {
+          color: #353535;
+        }
+
+        #wrap {
+          max-width: 1000px;
+          margin: 30px auto;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 4px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .container {
+          display: flex;
+        }
+
+        .container > section {
+          padding: 20px;
+        }
+
+        .genre-picker {
+          width: 20%;
+          margin-right: 50px;
+          background: #C3C3C3;
+          border-radius: 8px 0 0 8px;
+          box-shadow: 0 4px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .current-hits {
+          width: 80%;
+        }
+        .current-hits span {
+          text-transform: capitalize;
+        }
+
+        .album-list {
+          display: flex;
+          flex-flow: row wrap;
+        }
+        .album-list li {
+          width: 200px;
+          margin-bottom: 20px;
+        }
+        .album-list img {
+          margin-bottom: 10px;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="wrap"></div>
+  </body>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.1/react.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.1/react-dom.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.8.1/axios.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script type="text/babel">
+        const genreIds = {
+          // genre IDs for iTunes queries
+          alternative: 20,
+          pop: 14,
+          hipHop: 18
+        };
+
+        const App = React.createClass({
+          genreChoice() {
+            return localStorage.getItem('genreChoice') || 'alternative';
+          },
+          getInitialState() {
+            return {
+              genreChoice: this.genreChoice()
+            };
+          },
+          changeGenre(genre) {
+            this.setState({genreChoice: genre});
+          },
+          render() {
+            return (
+              <div className="container">
+                <GenrePicker changeGenre={this.changeGenre} />
+                <CurrentHits genre={this.state.genreChoice} />
+              </div>
+            );
+          }
+        });
+
+        const GenrePicker = React.createClass({
+          onGenreChange(e) {
+            e.preventDefault();
+            let genre = e.target.value;
+            localStorage.setItem('genreChoice', genre);
+            this.props.changeGenre(genre);
+          },
+          render() {
+             return (
+              <section className="genre-picker">
+                <label>Pick a Genre</label>
+                <select id="" value={this.props.value} onChange={this.onGenreChange}>
+                  <option value="alternative">Alternative</option>
+                  <option value="pop">Pop</option>
+                  <option value="hipHop">Hip Hop</option>
+                </select>
+              </section>
+            );
+          }  
+        });
+
+        const CurrentHits = React.createClass({
+          getInitialState() {
+            return {
+              albums: {}
+            };
+          },
+          componentDidMount() {
+            this.getCurrentHits(this.props.genre); 
+          },
+          componentWillReceiveProps(newProps) {
+            this.getCurrentHits(newProps.genre);
+          },
+          getCurrentHits(genre) {
+            const url = 'https://itunes.apple.com/us/rss/topalbums/limit=5/genre=' + genreIds[genre] + '/explicit=true/json';
+            axios.get(url)
+              .then(results => {
+                const albums = Object.assign({}, this.state.albums, results.data.feed.entry);
+                this.setState({albums});
+              })
+              .catch((err) => {
+                console.log("An error occurred"); 
+              });
+            
+          },
+          render() {
+            return (
+              <section className="current-hits">
+                <h2>Current iTunes Top Five - <span>{this.props.genre.replace(/([A-Z])/g, ' $1')}</span></h2>
+                <CurrentHitsList albums={this.state.albums} />
+              </section>
+            );
+          }  
+        });
+
+        var CurrentHitsList = React.createClass({
+          generateListItem(key) {
+            const {albums} = this.props;
+            const album = albums[key];
+            return (
+              <li key={key}>
+                <a href={album.link.attributes.href} title="View on iTunes">
+                  <img src={album["im:image"][2].label} />
+                  <h3 className="album-name">{album["im:name"].label}</h3>
+                  <h4 className="artist-name">{album["im:artist"].label}</h4>
+                </a>
+              </li>
+            );
+          },
+          render() {
+            return (
+              <ul className="album-list">
+                {Object.keys(this.props.albums).map(this.generateListItem)}
+              </ul>
+            );
+          } 
+        });
+
+        ReactDOM.render(<App />, document.querySelector('#wrap'));
+
+    </script>
+</html>
